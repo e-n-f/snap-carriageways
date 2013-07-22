@@ -1,0 +1,70 @@
+#!/usr/bin/perl
+
+$pi = 4 * atan2(1, 1);
+$foot = .00000274;
+
+$bucket = 50 * $foot;
+$angbucket = 60 * $pi / 180;
+
+LINE:
+while (<>) {
+	next if (/--/);
+
+	($when, $a, $to, $b, $date, $time, $sec, $dist, $speed) = split(/ /);
+
+	next if ($dist < 10);
+
+	($lat1, $lon1) = split(/,/, $a);
+	($lat2, $lon2) = split(/,/, $b);
+
+	$rat = cos(($lat1 + $lat2) / 2 * $pi / 180);
+	$ang1 = atan2($lat2 - $lat1, ($lon2 - $lon1) * $rat);
+
+	$a = int($lat1 / $bucket);
+	$o = int($lon1 / $bucket);
+
+	@candidates = ();
+
+	for ($aa = $a - 1; $aa <= $a + 1; $aa++) {
+		for ($oo = $o - 2; $oo <= $o + 2; $oo++) { # XXX is 2 enough?
+			push @candidates, @{$means{$aa}{$oo}};
+		}
+	}
+
+	for $c (@candidates) {
+		$latd = $lat1 - $clat[$c];
+		$lond = $lon1 - $clon[$c];
+		$angd = $ang1 - $cang[$c];
+
+		$dist = sqrt($latd * $latd + $rat * ($lond * $lond));
+
+		# print "consider $lat1,$lon1 $ang1 to $clat[$c],$clon[$c] $cang[$c] $dist $angd\n";
+
+		if ($dist < $bucket) {
+			if (abs($angd) < $angbucket || abs($angd) > 2 * $pi - $angbucket) {
+				# print "matched $lat1,$lon1 $ang1 to $clat[$c],$clon[$c] $cang[$c]\n";
+
+				$clat[$c] = ($clat[$c] * $count[$c] + $lat1) / ($count[$c] + 1);
+				$clon[$c] = ($clon[$c] * $count[$c] + $lon1) / ($count[$c] + 1);
+				$cang[$c] = ($cang[$c] * $count[$c] + $ang1) / ($count[$c] + 1);
+				$count[$c]++;
+
+				next LINE;
+			}
+		}
+	}
+
+	$clat[$#clat + 1] = $lat1;
+	$clon[$#clon + 1] = $lon1;
+	$cang[$#cang + 1] = $ang1;
+	$count[$#count + 1] = $count;
+
+	# print "adding $lat1,$lon1 to $a $o\n";
+
+	push @{$means{$a}{$o}}, $#count;
+}
+
+for ($i = 0; $i <= $#clat; $i++) {
+	print "user date time $clat[$i],$clon[$i] $count[$i] $cang[$i]\n";
+}
+
