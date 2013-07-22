@@ -115,11 +115,14 @@ for ($i = 0; $i <= $#clat; $i++) {
 		$a2 = $a - $cang[$i];
 		$d2 = $d * cos($a2);
 
-		printf("%d %s %.6f,%.6f\n",
-			$seqs[$j],
+		$out[$seqs[$j]] = sprintf("a %s %.6f,%.6f\n",
 			$whens[$j],
 			$clat[$i] + sin($cang[$i]) * $d2,
 			$clon[$i] + cos($cang[$i]) * $d2 / $rat);
 	}
+}
+
+for (@out) {
+	print;
 }
 
