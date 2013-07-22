@@ -64,7 +64,18 @@ while (<>) {
 	push @{$means{$a}{$o}}, $#count;
 }
 
+($minlat, $minlon, $maxlat, $maxlon) = (37.192596, -122.811526, 38.070528, -121.702961);
+
+print "0 setlinewidth\n";
 for ($i = 0; $i <= $#clat; $i++) {
-	print "user date time $clat[$i],$clon[$i] $count[$i] $cang[$i]\n";
+	printf("%.4f %.4f moveto ",
+		($clon[$i] - $minlon) * 612 / ($maxlon - $minlon),
+		($clat[$i] - $minlat) * 612 / ($maxlat - $minlat));
+
+	printf("%.4f %.4f rlineto stroke\n",
+		cos($cang[$i]) * $bucket * 612 / ($maxlat - $minlat),
+		sin($cang[$i]) * $bucket * 612 / ($maxlat - $minlat));
+
+	# print "user date time $clat[$i],$clon[$i] $count[$i] $cang[$i]\n";
 }
 
