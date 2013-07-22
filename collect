@@ -46,7 +46,11 @@ while (<>) {
 
 				$clat[$c] = ($clat[$c] * $count[$c] + $lat1) / ($count[$c] + 1);
 				$clon[$c] = ($clon[$c] * $count[$c] + $lon1) / ($count[$c] + 1);
-				$cang[$c] = ($cang[$c] * $count[$c] + $ang1) / ($count[$c] + 1);
+
+				$cx = $count[$c] * cos($cang[$c]) + cos($ang1);
+				$cy = $count[$c] * sin($cang[$c]) + sin($ang1);
+				$cang[$c] = atan2($cy, $cx);
+
 				$count[$c]++;
 
 				next LINE;
