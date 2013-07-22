@@ -112,28 +112,10 @@ for ($i = 0; $i <= $#clat; $i++) {
 		$a2 = $a - $cang[$i];
 		$d2 = $d * cos($a2);
 
-		# XXX
-		if (1 || $a > 0) {
-			printf("%.4f %.4f %.4f 0 360 arc fill ",
-				($clon[$i] - $minlon) * 612 / ($maxlon - $minlon) + cos($cang[$i]) * $d2 * 612 / ($maxlat - $minlat),
-				($clat[$i] - $minlat) * 612 / ($maxlat - $minlat) + sin($cang[$i]) * $d2 * 612 / ($maxlat - $minlat),
-				5 * $foot * 612 / ($maxlat - $minlat));
-		} else {
-			printf("%.4f %.4f %.4f 0 360 arc fill ",
-				($clon[$i] - $minlon) * 612 / ($maxlon - $minlon) - cos($cang[$i]) * $d2 * 612 / ($maxlat - $minlat),
-				($clat[$i] - $minlat) * 612 / ($maxlat - $minlat) - sin($cang[$i]) * $d2 * 612 / ($maxlat - $minlat),
-				5 * $foot * 612 / ($maxlat - $minlat));
-		}
-	}
-
-	if (0) {
-		printf("%.4f %.4f moveto ",
-			($clon[$i] - $minlon) * 612 / ($maxlon - $minlon),
-			($clat[$i] - $minlat) * 612 / ($maxlat - $minlat));
-
-		printf("%.4f %.4f rlineto stroke\n",
-			cos($cang[$i]) * $bucket * 612 / ($maxlat - $minlat),
-			sin($cang[$i]) * $bucket * 612 / ($maxlat - $minlat));
+		printf("%.4f %.4f %.4f 0 360 arc fill ",
+			($clon[$i] - $minlon) * 612 / ($maxlon - $minlon) + cos($cang[$i]) * $d2 * 612 / ($maxlat - $minlat),
+			($clat[$i] - $minlat) * 612 / ($maxlat - $minlat) + sin($cang[$i]) * $d2 * 612 / ($maxlat - $minlat),
+			5 * $foot * 612 / ($maxlat - $minlat));
 	}
 
 	# print "user date time $clat[$i],$clon[$i] $count[$i] $cang[$i]\n";
