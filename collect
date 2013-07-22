@@ -36,6 +36,9 @@ while (<>) {
 		}
 	}
 
+	$best = -1;
+	$best_badness = 99999;
+
 	for $c (@candidates) {
 		$latd = $lat1 - $clat[$c];
 		$lond = $lon1 - $clon[$c];
@@ -47,20 +50,29 @@ while (<>) {
 
 		if ($dist < $bucket) {
 			if (abs($angd) < $angbucket || abs($angd) > 2 * $pi - $angbucket) {
-				# print "matched $lat1,$lon1 $ang1 to $clat[$c],$clon[$c] $cang[$c]\n";
+				$badness = ($dist / $bucket);
 
-				$clat[$c] = ($clat[$c] * $count[$c] + $lat1) / ($count[$c] + 1);
-				$clon[$c] = ($clon[$c] * $count[$c] + $lon1) / ($count[$c] + 1);
-
-				$cx = $count[$c] * cos($cang[$c]) + cos($ang1);
-				$cy = $count[$c] * sin($cang[$c]) + sin($ang1);
-				$cang[$c] = atan2($cy, $cx);
-
-				$count[$c]++;
-
-				next LINE;
+				if ($badness < $best_badness) {
+					$best_badness = $badness;
+					$best = $c;
+				}
 			}
 		}
+	}
+
+	if ($best >= 0) {
+		$c = $best;
+		# print "matched $lat1,$lon1 $ang1 to $clat[$c],$clon[$c] $cang[$c]\n";
+
+		$clat[$c] = ($clat[$c] * $count[$c] + $lat1) / ($count[$c] + 1);
+		$clon[$c] = ($clon[$c] * $count[$c] + $lon1) / ($count[$c] + 1);
+
+		$cx = $count[$c] * cos($cang[$c]) + cos($ang1);
+		$cy = $count[$c] * sin($cang[$c]) + sin($ang1);
+		$cang[$c] = atan2($cy, $cx);
+
+		$count[$c]++;
+		next LINE;
 	}
 
 	$clat[$#clat + 1] = $lat1;
