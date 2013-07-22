@@ -72,6 +72,10 @@ while (<>) {
 		$cang[$c] = atan2($cy, $cx);
 
 		$count[$c]++;
+
+		push @{$lats{$c}}, $lat1;
+		push @{$lons{$c}}, $lon1;
+
 		next LINE;
 	}
 
@@ -83,12 +87,34 @@ while (<>) {
 	# print "adding $lat1,$lon1 to $a $o\n";
 
 	push @{$means{$a}{$o}}, $#count;
+
+	push @{$lats{$#count}}, $lat1;
+	push @{$lons{$#count}}, $lon1;
 }
 
 ($minlat, $minlon, $maxlat, $maxlon) = (37.192596, -122.811526, 38.070528, -121.702961);
 
 print "0 setlinewidth\n";
 for ($i = 0; $i <= $#clat; $i++) {
+	@lats = @{$lats{$i}};
+	@lons = @{$lons{$i}};
+
+	$rat = cos($clat[$i] * $pi / 180);
+
+	for ($j = 0; $j <= $#lats; $j++) {
+		$latd = $lats[$j] - $clat[$i];
+		$lond = ($lons[$j] - $clon[$i]) * $rat;
+
+		$d = sqrt($latd * $latd + $lond * $lond);
+		$a = atan2($latd, $lond);
+
+		# XXX
+		printf("%.4f %.4f %.4f 0 360 arc fill ",
+			($clon[$i] - $minlon) * 612 / ($maxlon - $minlon) + cos($cang[$i]) * $d * 612 / ($maxlat - $minlat),
+			($clat[$i] - $minlat) * 612 / ($maxlat - $minlat) + sin($cang[$i]) * $d * 612 / ($maxlat - $minlat),
+		        10 * $foot * 612 / ($maxlat - $minlat));
+	}
+
 	printf("%.4f %.4f moveto ",
 		($clon[$i] - $minlon) * 612 / ($maxlon - $minlon),
 		($clat[$i] - $minlat) * 612 / ($maxlat - $minlat));
