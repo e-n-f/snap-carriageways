@@ -3,7 +3,7 @@
 $pi = 4 * atan2(1, 1);
 $foot = .00000274;
 
-$bucket = 50 * $foot;
+$bucket = 100 * $foot;
 $angbucket = 60 * $pi / 180;
 
 LINE:
@@ -11,6 +11,11 @@ while (<>) {
 	next if (/--/);
 
 	($when, $a, $to, $b, $date, $time, $sec, $dist, $speed) = split(/ /);
+
+	if ($date ne $odate) {
+		print STDERR "$date\n";
+		$odate = $date;
+	}
 
 	next if ($dist < 10);
 
