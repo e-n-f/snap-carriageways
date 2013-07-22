@@ -76,6 +76,8 @@ while (<>) {
 
 		push @{$lats{$c}}, $lat1;
 		push @{$lons{$c}}, $lon1;
+		push @{$seqs{$c}}, ++$seq;
+		push @{$whens{$c}}, "$date $time";
 
 		next LINE;
 	}
@@ -91,14 +93,15 @@ while (<>) {
 
 	push @{$lats{$#count}}, $lat1;
 	push @{$lons{$#count}}, $lon1;
+	push @{$seqs{$#count}}, ++$seq;
+	push @{$whens{$#count}}, "$date $time";
 }
 
-($minlat, $minlon, $maxlat, $maxlon) = (37.192596, -122.811526, 38.070528, -121.702961);
-
-print "0 setlinewidth\n";
 for ($i = 0; $i <= $#clat; $i++) {
 	@lats = @{$lats{$i}};
 	@lons = @{$lons{$i}};
+	@seqs = @{$seqs{$i}};
+	@whens = @{$whens{$i}};
 
 	$rat = cos($clat[$i] * $pi / 180);
 
@@ -112,12 +115,11 @@ for ($i = 0; $i <= $#clat; $i++) {
 		$a2 = $a - $cang[$i];
 		$d2 = $d * cos($a2);
 
-		printf("%.4f %.4f %.4f 0 360 arc fill ",
-			($clon[$i] - $minlon) * 612 / ($maxlon - $minlon) + cos($cang[$i]) * $d2 * 612 / ($maxlat - $minlat),
-			($clat[$i] - $minlat) * 612 / ($maxlat - $minlat) + sin($cang[$i]) * $d2 * 612 / ($maxlat - $minlat),
-			5 * $foot * 612 / ($maxlat - $minlat));
+		printf("%d %s %.6f,%.6f\n",
+			$seqs[$j],
+			$whens[$j],
+			$clat[$i] + sin($cang[$i]) * $d2,
+			$clon[$i] + cos($cang[$i]) * $d2 / $rat);
 	}
-
-	# print "user date time $clat[$i],$clon[$i] $count[$i] $cang[$i]\n";
 }
 
