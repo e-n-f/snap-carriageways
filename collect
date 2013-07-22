@@ -109,10 +109,17 @@ for ($i = 0; $i <= $#clat; $i++) {
 		$a = atan2($latd, $lond);
 
 		# XXX
-		printf("%.4f %.4f %.4f 0 360 arc fill ",
-			($clon[$i] - $minlon) * 612 / ($maxlon - $minlon) + cos($cang[$i]) * $d * 612 / ($maxlat - $minlat),
-			($clat[$i] - $minlat) * 612 / ($maxlat - $minlat) + sin($cang[$i]) * $d * 612 / ($maxlat - $minlat),
-		        10 * $foot * 612 / ($maxlat - $minlat));
+		if ($a > 0) {
+			printf("%.4f %.4f %.4f 0 360 arc fill ",
+				($clon[$i] - $minlon) * 612 / ($maxlon - $minlon) + cos($cang[$i]) * $d * 612 / ($maxlat - $minlat),
+				($clat[$i] - $minlat) * 612 / ($maxlat - $minlat) + sin($cang[$i]) * $d * 612 / ($maxlat - $minlat),
+				5 * $foot * 612 / ($maxlat - $minlat));
+		} else {
+			printf("%.4f %.4f %.4f 0 360 arc fill ",
+				($clon[$i] - $minlon) * 612 / ($maxlon - $minlon) - cos($cang[$i]) * $d * 612 / ($maxlat - $minlat),
+				($clat[$i] - $minlat) * 612 / ($maxlat - $minlat) - sin($cang[$i]) * $d * 612 / ($maxlat - $minlat),
+				5 * $foot * 612 / ($maxlat - $minlat));
+		}
 	}
 
 	printf("%.4f %.4f moveto ",
