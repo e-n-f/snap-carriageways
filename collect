@@ -4,7 +4,7 @@ $pi = 4 * atan2(1, 1);
 $foot = .00000274;
 
 $bucket = 100 * $foot;
-$angbucket = 60 * $pi / 180;
+$angbucket = 45 * $pi / 180;
 
 LINE:
 while (<>) {
