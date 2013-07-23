@@ -1,0 +1,77 @@
+#!/usr/bin/perl
+
+$pi = 4 * atan2(1, 1);
+$foot = .00000274;
+
+$bucket = 150 * $foot;
+
+LINE:
+while (<>) {
+	next if (/--/);
+
+	($when, $a, $to, $b, $date, $time, $sec, $dist, $speed) = split(/ /);
+
+	if ($date ne $odate) {
+		print STDERR "$date\n";
+		$odate = $date;
+	}
+
+	next if ($dist < 10);
+
+	($lat1, $lon1) = split(/,/, $a);
+	($lat2, $lon2) = split(/,/, $b);
+
+	$rat = cos(($lat1 + $lat2) / 2 * $pi / 180);
+	$ang1 = atan2($lat2 - $lat1, ($lon2 - $lon1) * $rat);
+
+	$a = int($lat1 / $bucket);
+	$o = int($lon1 / $bucket);
+
+	push @{$latbucket{"$a $o"}}, $lat1;
+	push @{$lonbucket{"$a $o"}}, $lon1;
+	push @{$angbucket{"$a $o"}}, $ang1;
+};
+
+for $b (keys(%latbucket)) {
+	@latcandidates = ();
+	@loncandidates = ();
+	@angcandidates = ();
+
+	($a, $o) = split(/ /, $b);
+	for ($aa = $a - 1; $aa <= $a + 1; $aa++) {
+		for ($oo = $o - 2; $oo <= $o + 2; $oo++) { # XXX is 2 enough?
+			push @latcandidates, @{$latbucket{"$aa $oo"}};
+			push @loncandidates, @{$lonbucket{"$aa $oo"}};
+			push @angcandidates, @{$angbucket{"$aa $oo"}};
+		}
+	}
+
+	@lats = @{$latbucket{$b}};
+	@lons = @{$lonbucket{$b}};
+	@angs = @{$angbucket{$b}};
+
+	for ($i = 0; $i <= $#lats; $i++) {
+		$latsum = 0;
+		$lonsum = 0;
+		$count = 0;
+
+		$rat = cos($lats[$i] * $pi / 180);
+
+		for ($j = 0; $j <= $#latcandidates; $j++) {
+			# print "consider $lats[$i],$lons[$i],$angs[$i] vs $latcandidates[$j],$loncandidates[$j],$angcandidates[$j]\n";
+
+			$latd = $lats[$i] - $latcandidates[$j];
+			$lond = ($lons[$i] - $loncandidates[$j]) * $rat;
+
+			$d = sqrt($latd * $latd + $lond * $lond);
+
+			if ($d < $bucket) {
+				$latsum += $latcandidates[$j];
+				$lonsum += $loncandidates[$j];
+				$count++;
+			}
+		}
+
+		printf("user date time %.6f,%.6f\n", $latsum / $count, $lonsum / $count);
+	}
+}
