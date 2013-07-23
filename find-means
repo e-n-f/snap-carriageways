@@ -66,9 +66,22 @@ for $b (keys(%latbucket)) {
 			$d = sqrt($latd * $latd + $lond * $lond);
 
 			if ($d < $bucket) {
-				$latsum += $latcandidates[$j];
-				$lonsum += $loncandidates[$j];
-				$count++;
+				$angd = $angs[$i] - $angcandidates[$j];
+				while ($angd > $pi) {
+					$angd -= 2 * $pi;
+				}
+				while ($angd < -$pi) {
+					$angd += 2 * $pi;
+				}
+				$weight = cos($angd);
+
+				# printf STDERR ("%.3f and %3f weight %f\n", $angs[$i] * 180 / $pi, $angcandidates[$j] * 180 / $pi, $weight);
+
+				if ($weight > 0) {
+					$latsum += $latcandidates[$j] * $weight;
+					$lonsum += $loncandidates[$j] * $weight;
+					$count += $weight;
+				}
 			}
 		}
 
