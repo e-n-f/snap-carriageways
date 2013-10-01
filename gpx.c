@@ -39,7 +39,7 @@ static void XMLCALL start(void *data, const char *element, const char **attribut
 static void XMLCALL end(void *data, const char *el) {
 }
 
-int main(int argc, char *argv[]) {
+void parse(FILE *f) {
 	XML_Parser p = XML_ParserCreate(NULL);
 	if (p == NULL) {
 		fprintf(stderr, "Couldn't allocate memory for parser\n");
@@ -53,12 +53,12 @@ int main(int argc, char *argv[]) {
 		int len;
 		char Buff[BUFFSIZE];
 
-		len = fread(Buff, 1, BUFFSIZE, stdin);
-		if (ferror(stdin)) {
+		len = fread(Buff, 1, BUFFSIZE, f);
+		if (ferror(f)) {
        			fprintf(stderr, "Read error\n");
 			exit(EXIT_FAILURE);
 		}
-		done = feof(stdin);
+		done = feof(f);
 
 		if (XML_Parse(p, Buff, len, done) == XML_STATUS_ERROR) {
 			fprintf(stderr, "Parse error at line %lld:\n%s\n", (long long) XML_GetCurrentLineNumber(p), XML_ErrorString(XML_GetErrorCode(p)));
@@ -67,5 +67,23 @@ int main(int argc, char *argv[]) {
 	}
 
 	XML_ParserFree(p);
-	return 0;
+}
+
+int main(int argc, char *argv[]) {
+	if (argc == 1) {
+		parse(stdin);
+	} else {
+		int i;
+
+		for (i = 1; i < argc; i++) {
+			FILE *f = fopen(argv[i], "r");
+			if (f == NULL) {
+				perror(argv[i]);
+				exit(EXIT_FAILURE);
+			}
+
+			parse(f);
+			fclose(f);
+		}
+	}
 }
