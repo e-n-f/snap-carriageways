@@ -10,9 +10,19 @@
 #include <math.h>
 #include <time.h>
 
+// boilerplate from
+// http://marcomaggi.github.io/docs/expat.html#overview-intro
+// Copyright 1999, Clark Cooper
+
+#define BUFFSIZE        8192
+
+// -----------------------------------------
+
 struct point {
 	float lat;
 	float lon;
+
+	int next; // in bucket
 };
 
 struct point *points = NULL;
@@ -22,11 +32,43 @@ int npalloc = 0;
 #define FOOT .00000274
 #define BUCKET (100 * FOOT)
 
-// boilerplate from
-// http://marcomaggi.github.io/docs/expat.html#overview-intro
-// Copyright 1999, Clark Cooper
+struct bucket {
+	long long code;
+	int point;
 
-#define BUFFSIZE        8192
+	struct bucket *left;
+	struct bucket *right;
+};
+
+struct bucket *buckets = NULL;
+
+struct bucket **findbucket(double lat, double lon) {
+	struct bucket **here = &buckets;
+
+	int a = (lat + 180) / BUCKET;
+	int o = (lon + 180) / BUCKET;
+	long long code = (((long long) a) << 32) ^ o;
+
+	while (*here != NULL) {
+		if (code == (*here)->code) {
+			return here;
+		}
+
+		if (code < ((*here)->code)) {
+			here = &((*here)->left);
+		} else {
+			here = &((*here)->right);
+		}
+	}
+
+	*here = malloc(sizeof(struct bucket));
+	(*here)->code = code;
+	(*here)->left = NULL;
+	(*here)->right = NULL;
+	(*here)->point = -1;
+
+	return here;
+}
 
 void point(double lat, double lon) {
 	if (npoints >= npalloc) {
@@ -40,7 +82,33 @@ void point(double lat, double lon) {
 
 	points[npoints].lat = lat;
 	points[npoints].lon = lon;
+
+	if (lat != 0) {
+		struct bucket **b = findbucket(lat, lon);
+
+		points[npoints].next = (*b)->point;
+		(*b)->point = npoints;
+
+	}
+
 	npoints++;
+}
+
+void traverse(struct bucket *b) {
+	if (b != NULL) {
+		traverse(b->left);
+		traverse(b->right);
+
+		printf("%lld:\n", b->code);
+
+		int pt = b->point;
+		while (pt != -1) {
+			printf("   %d %f,%f\n", pt, points[pt].lat, points[pt].lon);
+			pt = points[pt].next;
+		}
+
+		printf("\n");
+	}
 }
 
 static void XMLCALL start(void *data, const char *element, const char **attribute) {
@@ -115,5 +183,6 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	printf("got %d points\n", npoints);
+	traverse(buckets);
 	exit(EXIT_SUCCESS);
 }
