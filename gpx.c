@@ -21,6 +21,7 @@
 struct point {
 	float lat;
 	float lon;
+	float angle;
 
 	int next; // in bucket
 };
@@ -83,12 +84,19 @@ void point(double lat, double lon) {
 	points[npoints].lat = lat;
 	points[npoints].lon = lon;
 
+	float angle = -999;
+	if (npoints - 1 > 0 && points[npoints - 1].lat != 0 && lat != 0) {
+		double rat = cos(lat * M_PI / 180);
+		angle = atan2(lat - points[npoints - 1].lat,
+			      (lon - points[npoints - 1].lon) * rat);
+	}
+	points[npoints].angle = angle;
+
 	if (lat != 0) {
 		struct bucket **b = findbucket(lat, lon);
 
 		points[npoints].next = (*b)->point;
 		(*b)->point = npoints;
-
 	}
 
 	npoints++;
@@ -103,7 +111,7 @@ void traverse(struct bucket *b) {
 
 		int pt = b->point;
 		while (pt != -1) {
-			printf("   %d %f,%f\n", pt, points[pt].lat, points[pt].lon);
+			printf("   %d %f,%f %f\n", pt, points[pt].lat, points[pt].lon, points[pt].angle);
 			pt = points[pt].next;
 		}
 
