@@ -212,7 +212,7 @@ void match() {
 		double rat = cos(points[i].lat * M_PI / 180);
 
 		// Should be good up to 60 degrees latitude
-		struct bucket *look[5][3];
+		int look[5][3];
 
 		int x, y;
 		for (y = -1; y <= 1; y++) {
@@ -220,44 +220,65 @@ void match() {
 				struct bucket **b = findbucket(points[i].lat + y * BUCKET,
 							       points[i].lon + x * BUCKET, 0);
 
-				look[x + 2][y + 1] = *b;
+				if (*b == NULL) {
+					look[x + 2][y + 1] = -1;
+				} else {
+					look[x + 2][y + 1] = (*b)->point;
+				}
+			}
+		}
 
-				if (*b != NULL) {
-					int pt;
-					for (pt = (*b)->point; pt != -1; pt = points[pt].next) {
-						if (points[pt].dist < MIN_DIST) {
-							continue;
-						}
+		while (count < 20) {
+			int best = -1;
+			int bx = -1, by = -1;
 
-						double latd = points[pt].lat - points[i].lat;
-						double lond = (points[pt].lon - points[i].lon) * rat;
-						double d = sqrt(latd * latd + lond * lond);
-
-						if (d < BUCKET) {
-							double angd = fabs(points[pt].angle - points[i].angle);
-							if (angd > M_PI) {
-								angd = 2 * M_PI - angd;
-							}
-							double weight = 1 / (1 + (angd * 2) * (angd * 2));
-
-#if 0
-							printf("%f %f,%f %f,%f %f %f\n",
-								weight,
-								points[i].lat, points[i].lon,
-								points[pt].lat, points[pt].lon,
-								points[i].angle, points[pt].angle);
-#endif
-
-							if (weight > 0) {
-								latsum += weight * (points[pt].lat - points[i].lat);
-								lonsum += weight * (points[pt].lon - points[i].lon);
-								count += weight;
-							}
-						} else {
-							reject++;
-						}
+			for (y = 0; y < 3; y++) {
+				for (x = 0; x < 5; x++) {
+					if (look[x][y] > best) {
+						bx = x;
+						by = y;
+						best = look[x][y];
 					}
 				}
+			}
+
+			if (best == -1) {
+				break;
+			}
+
+			int pt = best;
+			look[bx][by] = points[best].next;
+
+			if (points[pt].dist < MIN_DIST) {
+				continue;
+			}
+
+			double latd = points[pt].lat - points[i].lat;
+			double lond = (points[pt].lon - points[i].lon) * rat;
+			double d = sqrt(latd * latd + lond * lond);
+
+			if (d < BUCKET) {
+				double angd = fabs(points[pt].angle - points[i].angle);
+				if (angd > M_PI) {
+					angd = 2 * M_PI - angd;
+				}
+				double weight = 1 / (1 + (angd * 2) * (angd * 2));
+
+#if 0
+				printf("%f %f,%f %f,%f %f %f\n",
+					weight,
+					points[i].lat, points[i].lon,
+					points[pt].lat, points[pt].lon,
+					points[i].angle, points[pt].angle);
+#endif
+
+				if (weight > 0) {
+					latsum += weight * (points[pt].lat - points[i].lat);
+					lonsum += weight * (points[pt].lon - points[i].lon);
+					count += weight;
+				}
+			} else {
+				reject++;
 			}
 		}
 
