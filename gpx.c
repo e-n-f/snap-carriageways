@@ -182,6 +182,7 @@ void parse(FILE *f) {
 
 void match() {
 	int i;
+	int old = 0;
 
 	for (i = 0; i < npoints; i++) {
 		if (points[i].lat == 0) {
@@ -189,9 +190,15 @@ void match() {
 			continue;
 		}
 
+		int percent = 100 * i / npoints;
+		if (percent != old) {
+			fprintf(stderr, "%d%%\n", percent);
+			old = percent;
+		}
+
 		double latsum = 0;
 		double lonsum = 0;
-		int count = 0;
+		double count = 0;
 		int reject = 0;
 
 		double rat = cos(points[i].lat * M_PI / 180);
@@ -216,9 +223,21 @@ void match() {
 						double d = sqrt(latd * latd + lond * lond);
 
 						if (d < BUCKET) {
-							latsum += points[pt].lat;
-							lonsum += points[pt].lon;
-							count++;
+							double weight = cos(points[pt].angle - points[i].angle);
+
+#if 0
+							printf("%f %f,%f %f,%f %f %f\n",
+								weight,
+								points[i].lat, points[i].lon,
+								points[pt].lat, points[pt].lon,
+								points[i].angle, points[pt].angle);
+#endif
+
+							if (weight > 0) {
+								latsum += weight * (points[pt].lat - points[i].lat);
+								lonsum += weight * (points[pt].lon - points[i].lon);
+								count += weight;
+							}
 						} else {
 							reject++;
 						}
@@ -229,9 +248,9 @@ void match() {
 			}
 		}
 
-		printf("%f,%f %f,%f %d %d\n",
+		printf("%f,%f %f,%f %f %d\n",
 			points[i].lat, points[i].lon,
-			latsum / count, lonsum / count,
+			points[i].lat + latsum / count, points[i].lon + lonsum / count,
 			count, reject);
 	}
 }
