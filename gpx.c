@@ -232,7 +232,7 @@ void match() {
 			}
 		}
 
-		while (count < 20) {
+		while (count < 100) {
 			int best = -1;
 			int bx = -1, by = -1;
 
@@ -262,7 +262,8 @@ void match() {
 				if (angd > M_PI) {
 					angd = 2 * M_PI - angd;
 				}
-				double weight = 1 / (1 + (angd * 2) * (angd * 2));
+				// .09199 so 45+ degrees off goes to 0
+				double weight = 1 / (1 + (angd * 2) * (angd * 2)) - .09199;
 
 #if 0
 				printf("%f %f,%f %f,%f %f %f\n",
