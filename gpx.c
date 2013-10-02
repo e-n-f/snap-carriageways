@@ -43,7 +43,7 @@ struct bucket {
 
 struct bucket *buckets = NULL;
 
-struct bucket **findbucket(double lat, double lon) {
+struct bucket **findbucket(double lat, double lon, int alloc) {
 	struct bucket **here = &buckets;
 
 	int a = (lat + 180) / BUCKET;
@@ -62,11 +62,13 @@ struct bucket **findbucket(double lat, double lon) {
 		}
 	}
 
-	*here = malloc(sizeof(struct bucket));
-	(*here)->code = code;
-	(*here)->left = NULL;
-	(*here)->right = NULL;
-	(*here)->point = -1;
+	if (alloc) {
+		*here = malloc(sizeof(struct bucket));
+		(*here)->code = code;
+		(*here)->left = NULL;
+		(*here)->right = NULL;
+		(*here)->point = -1;
+	}
 
 	return here;
 }
@@ -84,16 +86,22 @@ void point(double lat, double lon) {
 	points[npoints].lat = lat;
 	points[npoints].lon = lon;
 
-	float angle = -999;
-	if (npoints - 1 > 0 && points[npoints - 1].lat != 0 && lat != 0) {
+#define UNKNOWN_ANGLE -999
+
+	float angle = UNKNOWN_ANGLE;
+	if (npoints - 1 >= 0 && points[npoints - 1].lat != 0 && lat != 0) {
 		double rat = cos(lat * M_PI / 180);
 		angle = atan2(lat - points[npoints - 1].lat,
 			      (lon - points[npoints - 1].lon) * rat);
 	}
 	points[npoints].angle = angle;
 
+	if (npoints - 1 >= 0 && points[npoints - 1].angle == UNKNOWN_ANGLE) {
+		points[npoints - 1].angle = angle;
+	}
+
 	if (lat != 0) {
-		struct bucket **b = findbucket(lat, lon);
+		struct bucket **b = findbucket(lat, lon, 1);
 
 		points[npoints].next = (*b)->point;
 		(*b)->point = npoints;
@@ -172,6 +180,62 @@ void parse(FILE *f) {
 	XML_ParserFree(p);
 }
 
+void match() {
+	int i;
+
+	for (i = 0; i < npoints; i++) {
+		if (points[i].lat == 0) {
+			printf("--\n");
+			continue;
+		}
+
+		double latsum = 0;
+		double lonsum = 0;
+		int count = 0;
+		int reject = 0;
+
+		double rat = cos(points[i].lat * M_PI / 180);
+
+		// Should be good up to 60 degrees latitude
+		struct bucket *look[5][3];
+
+		int x, y;
+		for (y = -1; y <= 1; y++) {
+			for (x = -2; x <= 2; x++) {
+				struct bucket **b = findbucket(points[i].lat + y * BUCKET,
+							       points[i].lon + x * BUCKET, 0);
+
+				look[x + 2][y + 1] = *b;
+
+				if (*b != NULL) {
+					int pt = (*b)->point;
+
+					while (pt != -1) {
+						double latd = points[pt].lat - points[i].lat;
+						double lond = (points[pt].lon - points[i].lon) * rat;
+						double d = sqrt(latd * latd + lond * lond);
+
+						if (d < BUCKET) {
+							latsum += points[pt].lat;
+							lonsum += points[pt].lon;
+							count++;
+						} else {
+							reject++;
+						}
+
+						pt = points[pt].next;
+					}
+				}
+			}
+		}
+
+		printf("%f,%f %f,%f %d %d\n",
+			points[i].lat, points[i].lon,
+			latsum / count, lonsum / count,
+			count, reject);
+	}
+}
+
 int main(int argc, char *argv[]) {
 	if (argc == 1) {
 		parse(stdin);
@@ -190,7 +254,10 @@ int main(int argc, char *argv[]) {
 			fclose(f);
 		}
 	}
-	printf("got %d points\n", npoints);
-	traverse(buckets);
+
+	match();
+
+	//printf("got %d points\n", npoints);
+	//traverse(buckets);
 	exit(EXIT_SUCCESS);
 }
