@@ -234,7 +234,11 @@ void match() {
 						double d = sqrt(latd * latd + lond * lond);
 
 						if (d < BUCKET) {
-							double weight = cos(points[pt].angle - points[i].angle);
+							double angd = fabs(points[pt].angle - points[i].angle);
+							if (angd > M_PI) {
+								angd = 2 * M_PI - angd;
+							}
+							double weight = 1 / (1 + (angd * 2) * (angd * 2));
 
 #if 0
 							printf("%f %f,%f %f,%f %f %f\n",
