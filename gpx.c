@@ -22,6 +22,7 @@ struct point {
 	float lat;
 	float lon;
 	float angle;
+	float dist;
 
 	int next; // in bucket
 };
@@ -32,6 +33,8 @@ int npalloc = 0;
 
 #define FOOT .00000274
 #define BUCKET (100 * FOOT)
+
+#define MIN_DIST (8 * FOOT * 5280 / 3600)
 
 struct bucket {
 	long long code;
@@ -89,12 +92,17 @@ void point(double lat, double lon) {
 #define UNKNOWN_ANGLE -999
 
 	float angle = UNKNOWN_ANGLE;
+	float dist = 0;
 	if (npoints - 1 >= 0 && points[npoints - 1].lat != 0 && lat != 0) {
 		double rat = cos(lat * M_PI / 180);
 		angle = atan2(lat - points[npoints - 1].lat,
 			      (lon - points[npoints - 1].lon) * rat);
+		double latd = lat - points[npoints - 1].lat;
+		double lond = (lon - points[npoints - 1].lon) * rat;
+		dist = sqrt(latd * latd + lond * lond);
 	}
 	points[npoints].angle = angle;
+	points[npoints].dist = dist;
 
 	if (npoints - 1 >= 0 && points[npoints - 1].angle == UNKNOWN_ANGLE) {
 		points[npoints - 1].angle = angle;
@@ -215,9 +223,12 @@ void match() {
 				look[x + 2][y + 1] = *b;
 
 				if (*b != NULL) {
-					int pt = (*b)->point;
+					int pt;
+					for (pt = (*b)->point; pt != -1; pt = points[pt].next) {
+						if (points[pt].dist < MIN_DIST) {
+							continue;
+						}
 
-					while (pt != -1) {
 						double latd = points[pt].lat - points[i].lat;
 						double lond = (points[pt].lon - points[i].lon) * rat;
 						double d = sqrt(latd * latd + lond * lond);
@@ -241,8 +252,6 @@ void match() {
 						} else {
 							reject++;
 						}
-
-						pt = points[pt].next;
 					}
 				}
 			}
