@@ -199,7 +199,7 @@ void match() {
 
 	for (i = 0; i < npoints; i++) {
 		if (points[i].lat == 0) {
-			printf("--\n");
+			// printf("--\n");
 			olat = olon = 0;
 			continue;
 		}
@@ -285,11 +285,19 @@ void match() {
 			}
 		}
 
+#if 0
 		printf("%f,%f %f,%f %f,%f 8:%d %f %d\n",
 			points[i].lat, points[i].lon,
 			points[i].lat + latsum / count, points[i].lon + lonsum / count,
 			olat, olon,
 			(int) ((points[i].angle + M_PI) * 128 / M_PI),
+			count, reject);
+#endif
+		printf("%f,%f 8:%d // %f,%f %f,%f %f %d\n",
+			points[i].lat + latsum / count, points[i].lon + lonsum / count,
+			(int) ((points[i].angle + M_PI) * 128 / M_PI),
+			olat, olon,
+			points[i].lat, points[i].lon,
 			count, reject);
 
 		olat = points[i].lat + latsum / count;
