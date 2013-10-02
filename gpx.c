@@ -34,7 +34,7 @@ int npalloc = 0;
 #define FOOT .00000274
 #define BUCKET (100 * FOOT)
 
-#define MIN_DIST (8 * FOOT * 5280 / 3600)
+#define MIN_DIST (25 * FOOT)
 
 struct bucket {
 	long long code;
@@ -86,8 +86,6 @@ void point(double lat, double lon) {
 		}
 	}
 
-	points[npoints].lat = lat;
-	points[npoints].lon = lon;
 
 #define UNKNOWN_ANGLE -999
 
@@ -100,9 +98,15 @@ void point(double lat, double lon) {
 		double latd = lat - points[npoints - 1].lat;
 		double lond = (lon - points[npoints - 1].lon) * rat;
 		dist = sqrt(latd * latd + lond * lond);
+
+		if (dist < MIN_DIST) {
+			return;
+		}
 	}
 	points[npoints].angle = angle;
 	points[npoints].dist = dist;
+	points[npoints].lat = lat;
+	points[npoints].lon = lon;
 
 	if (npoints - 1 >= 0 && points[npoints - 1].angle == UNKNOWN_ANGLE) {
 		points[npoints - 1].angle = angle;
@@ -248,10 +252,6 @@ void match() {
 
 			int pt = best;
 			look[bx][by] = points[best].next;
-
-			if (points[pt].dist < MIN_DIST) {
-				continue;
-			}
 
 			double latd = points[pt].lat - points[i].lat;
 			double lond = (points[pt].lon - points[i].lon) * rat;
