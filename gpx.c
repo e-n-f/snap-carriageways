@@ -185,7 +185,7 @@ void parse(FILE *f) {
 
 		if (XML_Parse(p, Buff, len, done) == XML_STATUS_ERROR) {
 			fprintf(stderr, "Parse error at line %lld:\n%s\n", (long long) XML_GetCurrentLineNumber(p), XML_ErrorString(XML_GetErrorCode(p)));
-			exit(EXIT_FAILURE);
+			break;
 		}
 	}
 
