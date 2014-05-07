@@ -295,18 +295,35 @@ void match() {
 			count, reject);
 #endif
 		double latoff = 0, lonoff = 0;
+		double latoff2 = 0, lonoff2 = 0;
 		if (turn) {
 			double rat = cos(points[i].lat * M_PI / 180);
+
 			lonoff = 100 * FOOT * cos(points[i].angle - M_PI / 2) * rat;
 			latoff = 100 * FOOT * sin(points[i].angle - M_PI / 2);
+
+			lonoff2 = 100 * FOOT * cos(points[i + 1].angle - M_PI / 2) * rat;
+			latoff2 = 100 * FOOT * sin(points[i + 1].angle - M_PI / 2);
 		}
 
-		printf("%f,%f 8:%d // %f,%f %f,%f %f %d\n",
-			points[i].lat + latsum / count + latoff, points[i].lon + lonsum / count + lonoff,
-			(int) ((points[i].angle + M_PI) * 128 / M_PI),
-			olat, olon,
-			points[i].lat, points[i].lon,
-			count, reject);
+		if (turn) {
+			if (i + 1 < npoints && points[i + 1].lat != 0) {
+				printf("%f,%f %f,%f 8:%d // %f,%f %f,%f %f %d\n",
+					points[i].lat + latsum / count + latoff, points[i].lon + lonsum / count + lonoff,
+					points[i + 1].lat + latsum / count + latoff2, points[i + 1].lon + lonsum / count + lonoff2,
+					(int) ((points[i].angle + M_PI) * 128 / M_PI),
+					olat, olon,
+					points[i].lat, points[i].lon,
+					count, reject);
+			}
+		} else {
+			printf("%f,%f 8:%d // %f,%f %f,%f %f %d\n",
+				points[i].lat + latsum / count + latoff, points[i].lon + lonsum / count + lonoff,
+				(int) ((points[i].angle + M_PI) * 128 / M_PI),
+				olat, olon,
+				points[i].lat, points[i].lon,
+				count, reject);
+		}
 
 		olat = points[i].lat + latsum / count;
 		olon = points[i].lon + lonsum / count;
