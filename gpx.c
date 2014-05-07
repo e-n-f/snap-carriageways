@@ -24,6 +24,9 @@ struct point {
 	float angle;
 	float dist;
 
+	float lat2;
+	float lon2;
+
 	int next; // in bucket
 };
 
@@ -108,6 +111,8 @@ void point(double lat, double lon) {
 	points[npoints].dist = dist;
 	points[npoints].lat = lat;
 	points[npoints].lon = lon;
+	points[npoints].lat2 = lat;
+	points[npoints].lon2 = lon;
 
 	if (npoints - 1 >= 0 && points[npoints - 1].angle == UNKNOWN_ANGLE) {
 		points[npoints - 1].angle = angle;
@@ -330,16 +335,8 @@ void match() {
 #endif
 
 		if (turn) {
-			if (olat != 0) {
-				printf("%f,%f %f,%f 8:%d // %f,%f %f,%f %f %d\n",
-					//points[i].lat, points[i].lon,
-					olat, olon,
-					points[i].lat + latoff + latoff2, points[i].lon + lonoff + lonoff2,
-					(int) ((points[i].angle + M_PI) * 128 / M_PI),
-					olat, olon,
-					points[i].lat, points[i].lon,
-					count, reject);
-			}
+			points[i].lat2 = points[i].lat + latoff + latoff2;
+			points[i].lon2 = points[i].lon + lonoff + lonoff2;
 		} else {
 			printf("%f,%f 8:%d // %f,%f %f,%f %f %d\n",
 				points[i].lat + latsum / count + latoff, points[i].lon + lonsum / count + lonoff,
@@ -351,6 +348,45 @@ void match() {
 
 		olat = points[i].lat + latoff + latoff2;
 		olon = points[i].lon + lonoff + lonoff2;
+	}
+
+	if (turn) {
+		int i;
+		for (i = 0; i < npoints; i++) {
+			if (points[i].lat2 != 0) {
+				double rat = cos(points[i].lat2 * M_PI / 180);
+
+				double jd = 0;
+				int j;
+				for (j = i - 1; j >= 0 && points[j].lat2 != 0 && jd < 100 * FOOT; j--) {
+					double latd = points[j].lat2 - points[j + 1].lat2;
+					double lond = (points[j].lon2 - points[j + 1].lon2) * rat;
+					jd += sqrt(latd * latd + lond * lond);
+				}
+
+				double kd = 0;
+				int k;
+				for (k = i + 1; k < npoints && points[k].lat2 != 0 && kd < 100 * FOOT; k++) {
+					double latd = points[k].lat2 - points[k - 1].lat2;
+					double lond = (points[k].lon2 - points[k - 1].lon2) * rat;
+					kd += sqrt(latd * latd + lond * lond);
+				}
+
+				double latsum = 0;
+				double lonsum = 0;
+				int count = 0;
+
+				int n;
+				for (n = j + 1; n <= k - 1; n++) {
+					latsum += points[n].lat2;
+					lonsum += points[n].lon2;
+					count++;
+				}
+
+				printf("%f,%f 8:%d\n", latsum / count, lonsum / count, 
+					(int) ((points[i].angle + M_PI) * 128 / M_PI));
+			}
+		}
 	}
 }
 
