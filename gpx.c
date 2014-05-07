@@ -298,8 +298,8 @@ void match() {
 		if (turn) {
 			double rat = cos(points[i].lat * M_PI / 180);
 
-			lonoff = 100 * FOOT * cos(points[i].angle - M_PI / 2) * rat;
-			latoff = 100 * FOOT * sin(points[i].angle - M_PI / 2);
+			lonoff = 60 * FOOT * cos(points[i].angle - M_PI / 2) * rat;
+			latoff = 60 * FOOT * sin(points[i].angle - M_PI / 2);
 		}
 
 		if (turn) {
@@ -335,7 +335,7 @@ void fixturns() {
 
 			double jd = 0;
 			int j;
-			for (j = i - 1; j >= 0 && points[j].lat != 0 && jd < 500 * FOOT; j--) {
+			for (j = i - 1; j >= 0 && points[j].lat != 0 && jd < 50 * FOOT; j--) {
 				double latd = points[j].lat - points[j + 1].lat;
 				double lond = (points[j].lon - points[j + 1].lon) * rat;
 				jd += sqrt(latd * latd + lond * lond);
@@ -343,7 +343,7 @@ void fixturns() {
 
 			double kd = 0;
 			int k;
-			for (k = i + 1; k < npoints && points[k].lat != 0 && kd < 500 * FOOT; k++) {
+			for (k = i + 1; k < npoints && points[k].lat != 0 && kd < 50 * FOOT; k++) {
 				double latd = points[k].lat - points[k - 1].lat;
 				double lond = (points[k].lon - points[k - 1].lon) * rat;
 				kd += sqrt(latd * latd + lond * lond);
