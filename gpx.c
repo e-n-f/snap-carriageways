@@ -296,17 +296,45 @@ void match() {
 #endif
 		double latoff = 0, lonoff = 0;
 		if (turn) {
-			double rat = cos(points[i].lat * M_PI / 180);
-
-			lonoff = 60 * FOOT * cos(points[i].angle - M_PI / 2) * rat;
+			lonoff = 60 * FOOT * cos(points[i].angle - M_PI / 2) / rat;
 			latoff = 60 * FOOT * sin(points[i].angle - M_PI / 2);
 		}
+
+		double latoff2 = latsum / count;
+		double lonoff2 = lonsum / count;
+
+#if 0
+		//printf("we are going %f\n", points[i].angle * 180 / M_PI);
+		double offangle = atan2(latsum / count, (lonsum / count) * rat) - points[i].angle;
+		if (offangle > M_PI) {
+			offangle -= 2 * M_PI;
+		}
+		if (offangle < -M_PI) {
+			offangle += 2 * M_PI;
+		}
+		//printf("snap is at angle %f from that\n", offangle * 180 / M_PI);
+		double offdist = sqrt((latsum / count) * (latsum / count) + (lonsum / count * rat) * (lonsum / count * rat));
+		//printf("want to be %f away\n", offdist);
+		double hoff = fabs(offdist * cos(offangle));
+		//printf("which is %f in that direction\n", hoff);
+
+		double latoff2 , lonoff2;
+
+		if (offangle >= 0) {
+			lonoff2 = hoff * cos(points[i].angle + M_PI / 2) / rat;
+			latoff2 = hoff * sin(points[i].angle + M_PI / 2);
+		} else {
+			lonoff2 = hoff * cos(points[i].angle - M_PI / 2) / rat;
+			latoff2 = hoff * sin(points[i].angle - M_PI / 2);
+		}
+#endif
 
 		if (turn) {
 			if (olat != 0) {
 				printf("%f,%f %f,%f 8:%d // %f,%f %f,%f %f %d\n",
+					//points[i].lat, points[i].lon,
 					olat, olon,
-					points[i].lat + latsum / count + latoff, points[i].lon + lonsum / count + lonoff,
+					points[i].lat + latoff + latoff2, points[i].lon + lonoff + lonoff2,
 					(int) ((points[i].angle + M_PI) * 128 / M_PI),
 					olat, olon,
 					points[i].lat, points[i].lon,
@@ -321,8 +349,8 @@ void match() {
 				count, reject);
 		}
 
-		olat = points[i].lat + latsum / count + latoff;
-		olon = points[i].lon + lonsum / count + lonoff;
+		olat = points[i].lat + latoff + latoff2;
+		olon = points[i].lon + lonoff + lonoff2;
 	}
 }
 
