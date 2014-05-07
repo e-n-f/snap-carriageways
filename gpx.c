@@ -297,8 +297,8 @@ void match() {
 		double latoff = 0, lonoff = 0;
 		if (turn) {
 			double rat = cos(points[i].lat * M_PI / 180);
-			lonoff = 50 * FOOT * cos(points[i].angle - M_PI / 2) * rat;
-			latoff = 50 * FOOT * sin(points[i].angle - M_PI / 2);
+			lonoff = 100 * FOOT * cos(points[i].angle - M_PI / 2) * rat;
+			latoff = 100 * FOOT * sin(points[i].angle - M_PI / 2);
 		}
 
 		printf("%f,%f 8:%d // %f,%f %f,%f %f %d\n",
@@ -310,6 +310,37 @@ void match() {
 
 		olat = points[i].lat + latsum / count;
 		olon = points[i].lon + lonsum / count;
+	}
+}
+
+void fixturns() {
+	int i;
+
+	for (i = 0; i < npoints; i++) {
+		if (points[i].lat != 0) {
+			double rat = cos(points[i].lat * M_PI / 180);
+
+			double jd = 0;
+			int j;
+			for (j = i - 1; j >= 0 && points[j].lat != 0 && jd < 500 * FOOT; j--) {
+				double latd = points[j].lat - points[j + 1].lat;
+				double lond = (points[j].lon - points[j + 1].lon) * rat;
+				jd += sqrt(latd * latd + lond * lond);
+			}
+
+			double kd = 0;
+			int k;
+			for (k = i + 1; k < npoints && points[k].lat != 0 && kd < 500 * FOOT; k++) {
+				double latd = points[k].lat - points[k - 1].lat;
+				double lond = (points[k].lon - points[k - 1].lon) * rat;
+				kd += sqrt(latd * latd + lond * lond);
+			}
+
+			points[i].angle = atan2((points[k - 1].lat - points[j + 1].lat),
+						(points[k - 1].lon - points[j + 1].lon) * rat);
+
+			// printf("%d: using %d (%f) to %d (%f)\n", i, j, jd, k, kd);
+		}
 	}
 }
 
@@ -344,6 +375,10 @@ int main(int argc, char *argv[]) {
 			parse(f);
 			fclose(f);
 		}
+	}
+
+	if (turn) {
+		fixturns();
 	}
 
 	match();
