@@ -30,6 +30,7 @@ struct point {
 struct point *points = NULL;
 int npoints = 0;
 int npalloc = 0;
+int turn = 0;
 
 #define FOOT .00000274
 #define BUCKET (100 * FOOT)
@@ -293,8 +294,15 @@ void match() {
 			(int) ((points[i].angle + M_PI) * 128 / M_PI),
 			count, reject);
 #endif
+		double latoff = 0, lonoff = 0;
+		if (turn) {
+			double rat = cos(points[i].lat * M_PI / 180);
+			lonoff = 50 * FOOT * cos(points[i].angle - M_PI / 2) * rat;
+			latoff = 50 * FOOT * sin(points[i].angle - M_PI / 2);
+		}
+
 		printf("%f,%f 8:%d // %f,%f %f,%f %f %d\n",
-			points[i].lat + latsum / count, points[i].lon + lonsum / count,
+			points[i].lat + latsum / count + latoff, points[i].lon + lonsum / count + lonoff,
 			(int) ((points[i].angle + M_PI) * 128 / M_PI),
 			olat, olon,
 			points[i].lat, points[i].lon,
@@ -306,12 +314,26 @@ void match() {
 }
 
 int main(int argc, char *argv[]) {
-	if (argc == 1) {
+	extern int optind;
+	extern char *optarg;
+	int i;
+	
+	while ((i = getopt(argc, argv, "t")) != -1) {
+		switch (i) {
+		case 't':
+			turn = 1;
+			break;
+
+		default:
+			fprintf(stderr, "Usage: %s [-t] [file.gpx...]\n", argv[0]);
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	if (optind >= argc) {
 		parse(stdin);
 	} else {
-		int i;
-
-		for (i = 1; i < argc; i++) {
+		for (i = optind; i < argc; i++) {
 			FILE *f = fopen(argv[i], "r");
 			fprintf(stderr, "%s\n", argv[i]);
 			if (f == NULL) {
