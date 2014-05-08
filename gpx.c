@@ -356,31 +356,42 @@ void match() {
 			if (points[i].lat2 != 0) {
 				double rat = cos(points[i].lat2 * M_PI / 180);
 
+				double count = 50 * FOOT;
+				double latsum = points[i].lat2 * count;
+				double lonsum = points[i].lon2 * count;
+
 				double jd = 0;
 				int j;
-				for (j = i - 1; j >= 0 && points[j].lat2 != 0 && jd < 100 * FOOT; j--) {
+				for (j = i - 1; j >= 0 && points[j].lat2 != 0; j--) {
 					double latd = points[j].lat2 - points[j + 1].lat2;
 					double lond = (points[j].lon2 - points[j + 1].lon2) * rat;
-					jd += sqrt(latd * latd + lond * lond);
+					double d = sqrt(latd * latd + lond * lond);
+
+					if (d + jd < 200 * FOOT) {
+						latsum += points[j].lat2 * d;
+						lonsum += points[j].lon2 * d;
+						count += d;
+						jd += d;
+					} else {
+						break;
+					}
 				}
 
 				double kd = 0;
 				int k;
-				for (k = i + 1; k < npoints && points[k].lat2 != 0 && kd < 100 * FOOT; k++) {
+				for (k = i + 1; k < npoints && points[k].lat2 != 0; k++) {
 					double latd = points[k].lat2 - points[k - 1].lat2;
 					double lond = (points[k].lon2 - points[k - 1].lon2) * rat;
-					kd += sqrt(latd * latd + lond * lond);
-				}
+					double d = sqrt(latd * latd + lond * lond);
 
-				double latsum = 0;
-				double lonsum = 0;
-				int count = 0;
-
-				int n;
-				for (n = j + 1; n <= k - 1; n++) {
-					latsum += points[n].lat2;
-					lonsum += points[n].lon2;
-					count++;
+					if (d + kd < 200 * FOOT) {
+						latsum += points[k].lat2 * d;
+						lonsum += points[k].lon2 * d;
+						count += d;
+						kd += d;
+					} else {
+						break;
+					}
 				}
 
 				printf("%f,%f 8:%d\n", latsum / count, lonsum / count, 
