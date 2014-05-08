@@ -394,7 +394,16 @@ void match() {
 					}
 				}
 
-				printf("%f,%f 8:%d\n", latsum / count, lonsum / count, 
+				points[i].lat = latsum / count;
+				points[i].lon = lonsum / count;
+			}
+		}
+
+		for (i = 0; i + 1 < npoints; i++) {
+			if (points[i].lat != 0 && points[i + 1].lat != 0) {
+				printf("%f,%f %f,%f 8:%d\n",
+					points[i].lat, points[i].lon,
+					points[i + 1].lat, points[i + 1].lon,
 					(int) ((points[i].angle + M_PI) * 128 / M_PI));
 			}
 		}
